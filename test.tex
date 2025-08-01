@@ -1,0 +1,598 @@
+
+
+
+\chapter{Mise en œuvre du projet}
+\section*{Introduction}
+Ce troisième chapitre se concentre sur la phase de mise en œuvre du projet. Il présente la mise en œuvre des éléments définis lors de la phase de conception dans une structure claire. L'accent est mis sur l'architecture technique utilisée, les outils et technologies sélectionnés, ainsi que le processus de développement. L'objectif est de montrer comment les spécifications fonctionnelles et techniques préalablement établies sont devenues un système opérationnel, testé et prêt à l'emploi.
+\section*{L'architecture technique}
+L'architecture technique du dispositif, déjà présentée au chapitre précédent, repose entièrement sur une architecture divisée en trois composants principaux : une extension Chrome intégrée au navigateur, un serveur back-end développé en Python/Flask et un serveur web d'IA hébergeant une version en langage avancé. Cette phase offre une vue d'ensemble de cette architecture, mettant en évidence les relations utiles entre les modules, ainsi que les choix technologiques suivis pour leur implémentation.
+
+\subsection*{Présentation}
+Le système est conçu selon une architecture client-serveur. L'extension côté client agit comme un capteur de contenu : elle détecte les publications textuelles sur les réseaux sociaux (généralement Facebook), extrait le texte pertinent, puis lance une requête de vérification. Cette requête est transmise au serveur back-end, qui, à son tour, traite les données et interagit avec un moteur d'analyse sémantique hébergé localement sur la plateforme Ollama. Le résultat est ensuite renvoyé à l'extension et injecté discrètement dans l'interface utilisateur.
+
+Ce fonctionnement repose sur des échanges structurés, généralement au format JSON, transmis via des requêtes HTTP POST. Un cache local a également été intégré à l'extension afin de limiter les appels redondants et d'optimiser les performances de base.
+
+\subsection*{Coordination des composants}
+\begin{itemize}
+    \item \textbf{Extension Chrome :} Détecte automatiquement les publications, extrait le texte, vérifie le cache, envoie les données au serveur et affiche les résultats.
+    \item \textbf{Backend Flask :} Réception des données, applique le traitement linguistique (techniques de NLP), génère un déclencheur, interroge le moteur d'IA et renvoie une réponse formatée.
+    \item \textbf{Serveur d'IA (Ollama) :} Héberge une version LLaMA 3.2 chargée d'analyser le contenu et de fournir une analyse authentique.
+\end{itemize}
+Cette séparation des tâches permet la maintenance du code et rend l'arc plus performant.
+\section{Environnement et outils utilisés}
+Cette phase décrit l'ensemble des outils, technologies et configurations matérielles et logicielles ayant été mobilisés pour la mise en œuvre du projet. Elle couvre notamment les composants utilisés pour le développement de l'extension Chrome, la mise en place du serveur backend, ainsi que l'intégration d'un système d'analyse de contenu basé sur l'intelligence artificielle.
+
+Le développement s'est appuyé sur un environnement local composé d'un navigateur Google Chrome pour le déploiement de l'extension, d'un serveur local en Python pour la partie traitement, et d'un serveur annexe dédié à l'hébergement d'un modèle de langage pré-entraîné de type LLaMA 3.2. Ce modèle permet d'évaluer la fiabilité des contenus textuels issus des publications Facebook.
+
+L'extension, développée en JavaScript, est responsable de la détection des publications visibles sur la page web de l'utilisateur. Elle extrait le contenu textuel essentiel de chaque publication, puis l'envoie au backend local via une interface de programmation (API REST).
+
+Ce backend, codé en Python, effectue un prétraitement du texte à l'aide de techniques de traitement automatique du langage (NLP), avant de transmettre les données au serveur IA. Le serveur IA, où réside le modèle de vérification, analyse le contenu et retourne un verdict ou une évaluation textuelle. Cette réponse est ensuite renvoyée à l'extension, qui la stocke temporairement dans un système de cache local pour éviter des traitements redondants.
+
+Enfin, l'extension injecte visuellement les résultats d'analyse directement dans les publications concernées, sous forme d'éléments graphiques discrets mais informatifs. L'ensemble de cet environnement a été pensé pour assurer une interaction fluide entre les différentes composantes, tout en maintenant une modularité.
+\subsection{Environnement de développement}
+Le développement du projet a été réalisé sur un ordinateur personnel doté des caractéristiques techniques suivantes :
+
+\begin{itemize}
+    \item \textbf{Modèle :} Lenovo ThinkPad T480s
+    \item \textbf{Processeur :} Intel Core i5–8350U, cadencé entre 1.70 GHz et 1.90 GHz
+    \item \textbf{Mémoire vive (RAM) :} 24 Go
+    \item \textbf{Système d'exploitation :} Windows 11, version 64 bits
+    \item \textbf{Navigateur principal :} Google Chrome, avec des tests complémentaires sur d'autres navigateurs basés sur Chromium tels que Brave et Opera
+\end{itemize}
+Cette configuration s'est révélée suffisante pour mener à bien l'ensemble des phases de développement et de test de l'extension. L'environnement permet notamment de simuler l'expérience d'un utilisateur standard naviguant sur Facebook, ce qui a facilité la validation fonctionnelle de l'outil dans des conditions proches du réel.
+
+L'extension Chrome développée dans le cadre de ce projet a été testée principalement sur le site Facebook. Elle fonctionne de manière fluide sur les navigateurs reposant sur Chromium. En revanche, une incompatibilité a été constatée avec Firefox et Microsoft Edge. Ces navigateurs imposent certaines limitations en matière de gestion des extensions et d'accès au modèle de sécurité DOM, rendant le bon fonctionnement de l'outil incertain sur ces plateformes.
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=3cm, width=0.45\textwidth]{images/facebookimage.png} % Reduced width to accommodate two images
+    \hfill % Add horizontal space between images
+    \includegraphics[height=3cm, width=0.45\textwidth]{images/microsoft-windows-11-home.jpg} % Reduced width
+    \caption{Logos: Facebook and Windows 11} % Combined caption
+    \label{fig:logos} % Corrected label
+\end{figure}
+Pour la partie développement, deux environnements de programmation principaux ont été utilisés :
+
+
+Visual Studio Code (VS Code) :est un éditeur de code hautement performant qui, associé à l'ensemble des services de langage de programmation, offre la puissance d’un IDE et la rapidité d’un éditeur de texte. Grâce à un ensemble de fonctionnalités intelligentes propres à VS Code (suggestions, conseils de paramètres, navigation intelligente dans le code), il constitue l’éditeur de texte principal utilisé dans notre projet. En s’appuyant sur l’ensemble de ces outils, nous l’avons utilisé pour implémenter et manipuler les différents fichiers liés à notre extension, développée à l’aide des technologies HTML, CSS, JavaScript et JSON, dans le but d’intégrer et de gérer efficacement le contenu de cette extension.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/code-stable.png} 
+    \caption{Logos: Visual Studio Code } % Combined caption
+    \label{fig:logos} % Corrected label
+\end{figure}
+
+PyCharm est un IDE (environnement de développement intégré) spécialisé dans le langage Python. Il offre une panoplie d'outils pour le développement des projets Python ainsi que des projets dans des domaines connexes tels que le développement web et le traitement des données.
+Pour la partie backend du système, PyCharm a été mis à contribution dans notre projet. Cet environnement a grandement facilité la mise en place d'un serveur Python, notamment grâce à son intégration native avec le microframework Flask ainsi qu'avec les bibliothèques de NLP (NLP). PyCharm a permis une gestion efficace des dépendances, une meilleure organisation du code et un débogage fluide, contribuant ainsi significativement à la productivité et à la stabilité du développement backend.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=3cm, width=0.5\textwidth]{images/PyCharm_Icon.svg} 
+    \caption{Logos: PyCharm } % Combined caption
+    \label{fig:logos} % Corrected label
+\end{figure}
+\section{Outils, bibliothèques et technologies}
+\subsection{Backend Python (serveur API)}
+Le serveur backend du système a été développé en Python en utilisant le microframework \textbf{Flask}, reconnu pour sa légèreté, sa facilité de prise en main et sa compatibilité avec les architectures orientées microservices.
+
+Ce serveur joue un rôle central dans le traitement automatisé des publications textuelles extraites par l'extension Chrome. Lorsqu'un post est détecté, son contenu est transmis au backend, qui applique des techniques de \textbf{(NLP)} afin de structurer et analyser l'information. Ensuite, le serveur communique avec un module d'analyse local, basé sur un modèle pré-entraîné performant (\textbf{LLaMA 3.2}), afin d'évaluer la véracité du contenu détecté.
+
+Une fois l'analyse terminée, la réponse générée est renvoyée à l'extension, qui la stocke temporairement dans un cache local. Cette réponse est ensuite injectée visuellement dans le post concerné, avec un style adapté, permettant à l'utilisateur de bénéficier d'un retour rapide et contextualisé directement dans son fil d'actualité.
+\begin{description}
+\item\textbf{Python:}\newline La décision d'utiliser Python comme principale technologie côté serveur repose sur deux raisons principales : premièrement, sa grande compatibilité avec les environnements de développement modernes et deuxièmement, sa capacité à communiquer efficacement avec de grands modèles de langage (LLM), ce qui en fait un outil idéal pour notre besoin d'intégrer un système de vérification des faits pris en charge par l'IA. 
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=3cm, width=0.6\textwidth]{images/Python-Symbol.png} 
+    \caption{Logos: Python Logo } % Combined caption
+    \label{fig:logos} % Corrected label
+\end{figure}
+\item\textbf{Flask:}\newline
+Flask est un framework web léger conçu pour le langage Python, souvent classé parmi les « micro-frameworks » en raison de son approche minimaliste. Il met à disposition les éléments fondamentaux nécessaires au développement d’applications web, sans imposer de structure complexe ni de composants superflus. Contrairement à d'autres frameworks plus complets comme Django, Flask n’intègre pas de modules préconfigurés tels que la gestion des utilisateurs ou une interface d’administration. Cette souplesse permet aux développeurs de ne retenir que les fonctionnalités utiles à leur projet, ce qui en fait un outil adapté aux architectures modulaires et personnalisables, comme celle mise en œuvre dans notre système.
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=3cm, width=0.5\textwidth]{images/flask-icon-797x1024-5a9evoph.png} 
+    \caption{Logos: Flask Logo } % Combined caption
+    \label{fig:logos} % Corrected label
+\end{figure}
+\begin{description}
+\item \textit{Représentation Générale de Structure d'Architecture de Notre Serveur Backend}
+
+\begin{itemize}
+    \item \textbf{/backend}
+    \begin{itemize}
+        \item .venv/ \quad \textit{(Environnement virtuel Python isolé)}
+        \item moduls/ \quad \textit{(Dossier contenant les modules métiers)}
+        \begin{itemize}
+            \item ClaimExtractor.py \quad \textit{(Extraction d'informations textuelles avec NLP)}
+            \item Prompt.py \quad \textit{(Génération de prompts pour l'IA à partir du texte analysé)}
+            \item OllamaAPI.py \quad \textit{(Communication avec le serveur IA Ollama (modèle LLaMA 3.2))}
+        \end{itemize}
+        \item app.py \quad \textit{(Point d'entrée principal du serveur Flask (API REST))}
+        \item requirements.txt \quad \textit{(Liste des bibliothèques Python utilisées)}
+        \item README.md \quad \textit{(Documentation technique du backend)}
+        \item .gitignore \quad \textit{(Fichiers ignorés par Git (ex : .venv, \_\_pycache\_\_))}
+        \item Scratches and Consoles/ \quad \textit{(Espace temporaire PyCharm (non critique))}
+        \item External Libraries/ \quad \textit{(Librairies installées (affichage via l'IDE))}
+    \end{itemize}
+    
+\end{itemize}
+\item \textit{Représentation Technique De Notre Code Implémenté} 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/Screenshot 2025-06-21 133528.png} 
+    \caption{app.py:Déclarations et importations moduls} % Combined caption
+    \label{fig:logos} % Corrected label
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/Screenshot 2025-06-21 133753.png} 
+    \caption{app.py: Code Mécanismes essentiels du Serveur} % Combined caption
+    \label{fig:logos} % Corrected label
+\end{figure}
+
+\subsubsection{ Description du Script et des Modules Importés}
+
+Le programme est une application web basée sur le microframework \textbf{Flask}. Il utilise plusieurs modules et classes, certains fournis par Flask, d’autres développés spécifiquement pour ce projet.
+
+\begin{itemize}
+    \item \textbf{Flask} : classe principale de l’application web, elle permet d’instancier le serveur, définir les routes, gérer les requêtes HTTP et configurer l’application.
+
+    \item \textbf{\texttt{request}} : objet clé pour accéder aux données envoyées par le client, notamment le corps des requêtes (\texttt{json}, \texttt{form}, \texttt{data}), les paramètres d’URL, les en-têtes HTTP, la méthode utilisée (GET, POST) et l’adresse IP du client.
+
+    \item \textbf{\texttt{jsonify}} : fonction de Flask qui transforme des objets Python (listes, dictionnaires) en réponses HTTP JSON correctement formatées, en ajoutant les en-têtes nécessaires et en assurant une sérialisation correcte.
+
+    \item \textbf{Gestion CORS avec \texttt{flask\_cors}} : permet d’activer les règles CORS (Cross-Origin Resource Sharing) pour autoriser les requêtes HTTP provenant d’origines différentes, ce qui est essentiel pour que des clients externes (comme une extension Chrome) puissent communiquer avec le backend Flask sans être bloqués par les navigateurs.
+
+    \item \textbf{ClaimExtractor} : classe développée dans le projet, dédiée à l’analyse NLP des textes.
+
+    \item \textbf{Prompt} : classe qui construit l’invite finale destinée au modèle d’IA.
+
+    \item \textbf{OllamaAPI} : classe qui gère l’interaction avec le modèle d’IA, en formatant et transmettant les requêtes et réponses.
+\end{itemize}
+
+\subsubsection*{Mécanisme Essentiel du Fonctionnement de l'Application}
+Le mécanisme principal du script débute par l'appel à la classe \textbf{Flask} pour instancier l'objet représentant l'application. Par la suite, les règles de sécurité CORS sont appliquées via l'utilisation de la fonction \texttt{CORS}.
+
+Des variables globales sont ensuite déclarées, notamment l'URL de l'API du modèle et le nom du modèle à utiliser. Puis, la logique du traitement repose sur une route principale, chargée de réceptionner les requêtes envoyées sous forme JSON.
+
+À la réception d'une requête, l'application crée un objet \texttt{ClaimExtractor}, chargé du traitement textuel à l'aide de techniques de NLP. Elle instancie ensuite un objet \texttt{Prompt}, puis un objet \texttt{OllamaAPI}. Le prompt est généré, transmis à l'objet \texttt{OllamaAPI}, lequel l'envoie au modèle d'IA pour traitement final. Une fois la réponse obtenue, elle est immédiatement renvoyée au client, et le processus associé est détruit automatiquement.
+\subsubsection*{Description des Classes Implémentées dans le Backend}
+\begin{description}
+    \item \textbf{ClaimExtractor : Traitement linguistique et extraction d'informations}
+La classe \texttt{ClaimExtractor} constitue une composante centrale du traitement du langage dans notre application. Elle a été implémentée dans le but d'extraire des éléments significatifs à partir d'un texte brut. Ce traitement repose sur des techniques de NLP (NLP), appliquées à travers différentes étapes telles que :
+\begin{itemize}
+    \item le prétraitement lexical,
+    \item le nettoyage syntaxique (suppression des emojis, ponctuation, etc.),
+    \item l'analyse sémantique ou extraction de faits et entités.
+\end{itemize}
+Son objectif est de transformer une donnée textuelle brute en une structure exploitable, qui servira de base à la génération du prompt.
+
+\textbf{Rôle dans le flux :} Cette classe est instanciée dès la réception du texte utilisateur. Elle réalise un premier traitement de fond et renvoie un contenu structuré adapté à la suite du processus.
+\begin{itemize}
+   
+
+\begin{figure}
+    \centering
+    \includegraphics[height=12cm,width=1\linewidth]{images/Screenshot 2025-06-21 171813.png} 
+    \caption{ClaimExtractor Class} % Combined caption
+    \label{fig:logos} % Corrected label
+    
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[height=12cm,width=1\linewidth]{images/Screenshot 2025-06-21 173239.png} 
+    \caption{ClaimExtractor Class} % Combined caption
+    \label{fig:logos} % Corrected label
+\end{figure}
+\newpage
+
+\begin{figure}
+  
+    \includegraphics[height=5cm,width=1\linewidth]{images/Screenshot 2025-06-21 171908.png} 
+    \caption{ClaimExtractor Class} % Combined caption
+    \label{fig:logos} % Corrected label
+\end{figure}
+\vspace{-0.5cm}
+\subsubsection{Description de la Classe ClaimExtractor}
+La classe \texttt{ClaimExtractor} est un composant fondamental du module de traitement linguistique. Elle est conçue pour analyser un texte en langage naturel, identifier les énoncés pouvant être considérés comme des \textit{claims} (affirmations ou propositions vérifiables), puis les classifier en fonction de leur contenu sémantique. Cette classe repose principalement sur l'utilisation de la bibliothèque \textbf{Stanza}, développée par Stanford pour le NLP (NLP), ainsi que sur les bibliothèques \texttt{re} (expressions régulières) et \texttt{emoji}.
+
+\subsubsection*{1. \texttt{re} --- Bibliothèque d'expressions régulières}
+La bibliothèque \texttt{re} (abréviation d'expressions régulières) est un module natif de Python qui permet d'effectuer des opérations avancées de traitement de texte. Elle permet notamment de :
+\begin{itemize}
+    \item rechercher des motifs dans une chaîne de caractères (\textit{matching}),
+    \item extraire ou remplacer certains segments selon des modèles définis,
+    \item valider des codes (e-mails, URL, numéros, etc.),
+    \item effectuer des nettoyages textuels.
+\end{itemize}
+Dans ce projet, \texttt{re} est utilisée pour supprimer les URLs, mentions, caractères spéciaux et pour normaliser le texte avant le traitement linguistique.
+
+\subsubsection*{2. Stanza --- Outil de NLP (NLP)}
+\textbf{Stanza} est une bibliothèque NLP développée par l'Université de Stanford. Elle permet d'analyser le langage humain de manière structurée à travers plusieurs modules linguistiques comme :
+\begin{itemize}
+    \item la tokenisation (découpage du texte en mots et phrases),
+    \item le POS tagging (étiquetage des catégories grammaticales),
+    \item la reconnaissance d'entités nommées (NER),
+    \item la lemmatisation, la dépendance syntaxique, et bien d'autres.
+\end{itemize}
+Son principal avantage est son support multilingue et la qualité de ses modèles basés sur les réseaux de neurones.
+
+Dans cette application, Stanza est utilisé pour analyser les phrases et extraire des informations grammaticales et sémantiques nécessaires à l'identification des \textit{claims}.
+
+\subsubsection*{3. Emoji --- Gestion des emojis dans le texte}
+Le module \texttt{emoji} est une bibliothèque Python qui permet de convertir les emojis en texte lisible et inversement. Il est particulièrement utile pour :
+\begin{itemize}
+    \item remplacer les emojis par leur description textuelle (exemple : 😀 $\rightarrow$ \texttt{:grinning\_face:}),
+    \item reconnaître ou filtrer les emojis dans une chaîne de caractères.
+\end{itemize}
+Dans le contexte de ce projet, la fonction \texttt{emoji.demojize()} est utilisée pour transformer les emojis en leur équivalent textuel.
+
+
+\subsubsection*{Méthodes et Fonctionnalités Résumées}
+
+\begin{enumerate}
+    \item \textbf{\texttt{\_\_init\_\_}(self, lang="en")}  
+    Initialise le pipeline Stanza pour la langue choisie, activant tokenisation, POS-tagging et NER. Lève une exception en cas d’échec.
+
+    \item \textbf{\texttt{Clean\_text}(self, content)}  
+    Nettoie le texte brut en supprimant URL, mentions, caractères spéciaux, convertit hashtags et emojis en texte, et uniformise les espaces, pour préparer une analyse NLP fiable.
+
+    \item \textbf{\texttt{Is\_claim}(self, sentence)}  
+    Détermine si une phrase est un \textit{claim} selon des critères : longueur, présence de verbe, entités nommées ou quantitatifs, et exclusion des phrases subjectives. Retourne un booléen et une justification.
+
+    \item \textbf{\texttt{Classify\_claim}(self, text)}  
+    Classe un \textit{claim} en catégories prédéfinies (\texttt{expressive\_false}, \texttt{true}, \texttt{expressive\_true}) ou par défaut \texttt{neutral}, selon des mots-clés.
+
+    \item \textbf{\texttt{Compute\_confidence}(self, sentence, label)}  
+    Calcule un score de confiance (entre 0.5 et 1.0) basé sur la structure de la phrase, la présence d’un verbe, d’entités, et la classification du \textit{claim}.
+
+    \item \textbf{\texttt{Extract\_claims}(self, content)}  
+    Méthode principale combinant nettoyage, analyse NLP, détection, classification et évaluation des \textit{claims}. Retourne une liste enrichie avec texte, entités, classe, score de confiance et motif de sélection.
+\end{enumerate}
+
+
+\end{description}
+\subsubsection{Classe Prompt --- Génération du texte d'instruction pour le modèle IA}
+\begin{description}
+\item[Classe Prompt --- Génération du texte d'instruction pour le modèle IA]
+La classe \texttt{Prompt} est conçue pour formuler dynamiquement une consigne (ou \textit{prompt}) destinée à un modèle d'intelligence artificielle. Elle intègre une affirmation (\texttt{claim\_text}) dans une structure de texte prédéfinie, utilisée pour questionner le modèle sur la véracité ou la nature de cette affirmation.
+\end{description}
+
+\subsubsection*{Structure et fonctionnement :}
+
+\begin{enumerate}
+    \item \textbf{Méthode \texttt{\_\_init\_\_}(self, claim\_text) :}
+    Cette méthode d'initialisation :
+    \begin{itemize}
+        \item prend en paramètre un texte \texttt{claim\_text} (affirmation à évaluer),
+        \item insère ce texte dans une instruction structurée en anglais destinée à un modèle de type sémantique,
+        \item convertit l'ensemble du \textit{prompt} en minuscules pour normaliser l'entrée.
+    \end{itemize}
+
+    \textbf{Exemple de texte généré :}
+    \begin{verbatim}
+    he is an expert in verifying the capabilities.
+    Evaluation of affirmation and responses.
+    Affirmation: "that is a real claim"
+    1. Simply tell me if is this declaration: authentic / fake / 
+    expressively fake / expressively true?
+    2. Without supplying any explanation
+    \end{verbatim}
+    Cela permet d'uniformiser les requêtes envoyées au modèle et de forcer une réponse fermée (sans justification), facilitant la classification automatique.
+
+    \item \textbf{Méthode \texttt{get\_prompt}(self) :} % Renamed to get_prompt for clarity, based on common Python practices
+    Retourne simplement la chaîne de caractères générée et stockée dans \texttt{self.text}. % Renamed self.Textual content to self.text for Python convention
+    
+
+
+\subsubsection*{Utilité dans l'architecture de l'application}
+Cette classe permet d'encapsuler la logique de création de prompts clairs et cohérents, ce qui est crucial dans une architecture de type NLP + LLM. Elle sert de pont entre l'extraction de données (\textit{claims}) et leur interprétation par un modèle.
+     
+\end{enumerate}
+
+\end{description}
+\subsubsection{Classe OllamaAPI et architecture backend NLP/LLM}
+
+\begin{description}
+
+\item[] \textbf{1. Classe OllamaAPI}  
+Interface assurant la communication entre le backend Flask et un modèle de langage local LLaMA 3 (3 milliards de paramètres) via une API REST locale.
+
+\item[] \textbf{2. Fonctionnalité principale}  
+Envoi d’un \textit{prompt} par requête HTTP POST et réception de la réponse textuelle, avec gestion des erreurs réseau via la bibliothèque Python \texttt{requests}.
+
+\item[] \textbf{3. Structure}  
+\begin{itemize}
+    \item \texttt{\_\_init\_\_} : initialise l’URL de l’API et le nom du modèle.
+    \item \texttt{generate\_response(prompt)} : construit la requête, l’envoie, récupère la réponse et gère les exceptions.
+\end{itemize}
+
+\item[] \textbf{4. Rôle dans l’architecture}  
+Intervient entre la génération du prompt (classe \texttt{Prompt}) et la réponse finale, permettant une interrogation dynamique et modulaire du modèle via REST.
+
+\item[] \textbf{5. Avantages}  
+Modularité (adaptable à d’autres API), robustesse (gestion d’erreurs), et flexibilité (modification simple du modèle ou de l’URL).
+
+\item[] \textbf{6. Synthèse backend NLP/LLM}  
+Le backend, basé sur Flask, intègre plusieurs modules spécialisés :  
+\begin{itemize}
+    \item \texttt{ClaimExtractor} : analyse textuelle (tokenisation, POS, NER) avec Stanza, nettoyage du texte et classification des affirmations avec score de confiance.
+    \item \texttt{Prompt} : génère une invite standardisée destinée au LLM.
+    \item \texttt{OllamaAPI} : communique avec le modèle local LLaMA 3 via API REST.
+\end{itemize}
+Une unique route Flask gère la chaîne complète : réception du texte, analyse NLP, génération du prompt, interrogation du modèle, et retour de la réponse.  
+La configuration CORS garantit la communication sécurisée entre frontend (extension Chrome) et backend.
+
+\end{description}
+
+
+\subsubsection*{Conclusion}
+Ce back-end est une séquence cohérente de traitements visant à la détection et à l'analyse automatiques d'instructions textuelles. Il utilise des principes de pointe en NLP et en génération de langage, et respecte les principes d'encapsulation, de modularité et de robustesse logicielle, caractéristiques des meilleures pratiques en génie logiciel académique.
+\end{description}
+
+
+\subsection{L'Extension Chrome}
+
+\begin{description}
+    \item[1. Architecture Globale] 
+    \begin{itemize}
+        \item \textbf{Extension Chrome Facebook}
+        \begin{itemize}
+            \item \textit{Configuration} : \texttt{manifest.json}
+            \item \textit{Interface} : \texttt{popup.html, popup.js, popup.css}
+            \item \textit{Logique} : \texttt{content-script.js, background.js}
+            \item \textit{Services} : détection, analyse, cache, affichage
+            \item \textit{Ressources} : dossier \texttt{icons/}
+        \end{itemize}
+    \end{itemize}
+    
+    \item[2. Composants Clés]
+    \begin{itemize}
+        \item \textbf{Manifeste} : métadonnées, permissions, scripts, contextes
+        \item \textbf{Scripts principaux}
+        \begin{itemize}
+            \item \texttt{content-script.js} : détection posts, extraction, API, injection résultats
+            \item \texttt{background.js} : gestion cycle de vie, communication, état global
+        \end{itemize}
+        \item \textbf{Interface utilisateur} : contrôle via \texttt{popup.html/js/css}
+    \end{itemize}
+    
+    \item[3. Principaux Mécanismes Techniques]
+    \begin{itemize}
+        \item \textbf{Observation} : \texttt{MutationObserver} surveille le DOM et supprime éléments indésirables
+        \item \textbf{Cache} : stockage local avec expiration 24h, évite analyses répétées
+        \item \textbf{Communication} : messages internes et requêtes HTTP externes
+        \item \textbf{Manipulation DOM} : extraction continue, injection homogène, adaptation dynamique
+    \end{itemize}
+    
+    \item[4. Considérations Techniques]
+    \begin{itemize}
+        \item \textbf{Efficacité} : identifiants uniques, traitement asynchrone, gestion des files d’attente
+        \item \textbf{Flexibilité} : architecture modulaire, sélecteurs CSS dynamiques
+        \item \textbf{Sécurité} : isolation des contextes, validation des données, gestion sécurisée
+    \end{itemize}
+\end{description}
+
+\vspace{0.3cm}
+Cette organisation modulaire garantit une extension performante, maintenable et évolutive, adaptée aux changements de la plateforme Facebook.
+
+
+\newline
+\begin{description}
+
+\subsubsection{Architecture et Configuration Extension Chrome}
+ \begin{figure}[ht!]
+    \centering
+    \includegraphics[height=20cm,width=1\linewidth]{images/Screenshot 2025-06-23 124002.png}
+    \caption{Interface d'Extention Chrome}
+    \label{fig:enter-label}
+    \end{figure}
+    
+\end{description}
+\hspace{-1cm}
+\subsubsection*{Résumé des Composants du Fichier \texttt{manifest.json}}
+
+Le fichier \texttt{manifest.json} constitue la déclaration centrale d'une extension Chrome. Voici ses éléments principaux :
+
+\begin{itemize}
+    \item \textbf{Métadonnées} : \texttt{name}, \texttt{version}, \texttt{description}, \texttt{manifest\_version} définissent l'identité et la structure du projet.
+    
+    \item \textbf{Permissions} : Déclarent les accès nécessaires (\texttt{storage}, \texttt{tabs}, \texttt{scripting}, \texttt{webRequest}) pour interagir avec le navigateur et les pages visitées.
+
+    \item \textbf{Host Permissions} : Restreignent l'action de l’extension aux domaines ciblés (ex : Facebook).
+
+    \item \textbf{Content Scripts} : Spécifient les scripts injectés automatiquement sur certaines pages, avec leur moment d’exécution.
+
+    \item \textbf{Background Script} : Assure le traitement en arrière-plan et la gestion des événements persistants (\texttt{background.js} via \texttt{service\_worker}).
+
+    \item \textbf{UI de l'extension} : Définie via \texttt{action}, elle inclut le popup d’interface utilisateur et les info-bulles associées.
+
+    \item \textbf{Sécurité} : Le champ \texttt{content\_security\_policy} encadre strictement les sources de scripts exécutables.
+
+    \item \textbf{Ressources accessibles} : \texttt{web\_accessible\_resources} rend certaines ressources visibles depuis les pages ciblées par l’extension.
+
+    \item \textbf{Icônes} : Utilisées pour représenter visuellement l’extension dans l’interface de Chrome.
+\end{itemize}
+
+\begin{description}
+    \item[Chrome DevTools:]\newline
+\end{description}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[height=7cm,width=0.7\linewidth]{images/7-ways-pardot-users-can-use-chrome-developer-tools-copy.jpg}
+    \caption{Chrome DevTools}
+    \label{fig:enter-label}
+    \end{figure}
+    \vspace{-1cm}
+\subsubsection{Utilisation des Chrome DevTools dans le Développement d'une Extension Chrome d'Analyse de Publications Facebook}
+\vspace{0.3cm}
+\subsubsection*{ Usage de Chrome DevTools dans le Développement de l'Extension}
+
+\begin{specialpar}
+\textbf{Chrome DevTools} constitue un environnement intégré essentiel pour le développement, l’évaluation et l’optimisation d’extensions web. Dans le cadre du projet d’analyse automatique des publications Facebook, ces outils ont été exploités à différentes étapes du cycle de vie de l’extension :
+\end{specialpar}
+
+\begin{itemize}
+  \item \textbf{Console} : pour le suivi de l’exécution, la journalisation des traitements et le test direct des scripts.
+  \item \textbf{Inspecteur d’Éléments} : pour analyser le DOM de Facebook, vérifier l’injection des résultats et tester les règles CSS.
+  \item \textbf{Sources Panel} : pour déboguer le script \texttt{content-script.js} en temps réel et observer le flux d’analyse.
+  \item \textbf{Network Panel} : pour contrôler les échanges avec l’API Flask et diagnostiquer les erreurs de communication.
+  \item \textbf{Application Panel} : pour gérer et inspecter le cache local (\texttt{localStorage}) utilisé dans l’extension.
+  \item \textbf{Extensions Panel} : pour superviser l’état de l’extension, ses erreurs, et effectuer des rechargements rapides.
+  \item \textbf{Performance Panel} : pour mesurer l’impact de l’extension sur la réactivité de l’interface Facebook.
+  \item \textbf{Memory Panel} : pour analyser l’usage mémoire et prévenir les fuites dues aux structures de données internes.
+\end{itemize}
+
+\begin{specialpar}
+En synthèse, \textbf{Chrome DevTools} a joué un rôle critique dans le contrôle qualité de l’extension, garantissant à la fois sa robustesse fonctionnelle et sa performance globale.
+\end{specialpar}
+
+
+\begin{description}
+ \begin{specialpar}
+      \item Script Extension Chrome d'Analyse de Posts Facebook
+ \end{specialpar}
+\end{description} \begin{description}
+  
+\subsubsection{Description Technique du Script \texttt{contentscript.js} Responsable de l'Interaction avec les Publications Facebook}
+
+Le fichier \texttt{contentscript.js} constitue le cœur fonctionnel d'une extension de navigateur dédiée à l’analyse automatique du contenu textuel des publications Facebook. Il repose sur l’observation dynamique du DOM, une logique de cache locale, ainsi qu’un système modulaire et asynchrone d’interactions réseau. Voici les principaux composants techniques du script :
+
+\begin{itemize}
+    \item \textbf{Gestion des états de traitement} :
+    \begin{itemize}
+        \item \texttt{pendingPosts} : stocke les identifiants des publications en cours d’analyse.
+        \item \texttt{processedPosts} : conserve les publications déjà traitées pour éviter les doublons.
+        \item \texttt{observedPosts} : évite la ré-observation des mêmes éléments DOM.
+    \end{itemize}
+
+    \item \textbf{Mécanisme de cache local} :
+    \begin{itemize}
+        \item Basé sur \texttt{localStorage}, avec des clés générées par hachage du texte.
+        \item Expiration des entrées au bout de 24 heures.
+        \item Fonctions \texttt{loadCache} et \texttt{saveCache} pour la gestion du cache.
+    \end{itemize}
+
+    \item \textbf{Extraction sémantique du contenu} :
+    \begin{itemize}
+        \item La fonction \texttt{extractMainPostContent} isole le contenu principal en filtrant les sections non pertinentes.
+        \item En cas d’échec, une méthode alternative assemble le texte à partir des nœuds \texttt{div} avec l’attribut \texttt{dir="auto"}.
+    \end{itemize}
+
+    \item \textbf{Identification et filtrage contextuel} :
+    \begin{itemize}
+        \item Fonctions \texttt{isComment} et \texttt{isSubElement} pour exclure les commentaires et composants secondaires.
+    \end{itemize}
+
+    \item \textbf{Génération d’identifiants stables} :
+    \begin{itemize}
+        \item Chaque publication reçoit un identifiant unique via \texttt{generateUniquePostId}, basé sur un hachage du texte.
+    \end{itemize}
+
+    \item \textbf{Injection et visualisation des résultats} :
+    \begin{itemize}
+        \item La fonction \texttt{injectResult} affiche les résultats directement dans la page.
+        \item Un code couleur (vert pour "vrai", rouge pour "faux") facilite la compréhension immédiate.
+    \end{itemize}
+
+    \item \textbf{Analyse et appel distant} :
+    \begin{itemize}
+        \item Utilisation d’une API locale (Flask) via \texttt{analyzePostWithId}.
+        \item En cas d’erreur, un message de secours est affiché.
+    \end{itemize}
+
+    \item \textbf{Détection des contenus dynamiques} :
+    \begin{itemize}
+        \item Utilisation de \texttt{MutationObserver} dans \texttt{setupScrollObserver} pour détecter les publications chargées dynamiquement.
+    \end{itemize}
+
+    \item \textbf{Intégration avec l’extension} :
+    \begin{itemize}
+        \item Écoute des messages via \texttt{chrome.runtime.onMessage} pour vider le cache ou relancer l’analyse.
+    \end{itemize}
+
+    \item \textbf{Initialisation du processus} :
+    \begin{itemize}
+        \item La fonction \texttt{initialize} est exécutée après le chargement du DOM.
+        \item Elle orchestre : le chargement du cache, l’activation de l’observateur, le traitement initial, et la planification périodique.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection*{ Conclusion}
+
+Le script \texttt{contentscript.js} constitue un composant essentiel d’une extension de navigateur orientée vers l’analyse automatique des contenus sur les réseaux sociaux. Il combine plusieurs techniques avancées : observation dynamique du DOM, filtrage sémantique, gestion optimisée du cache local, et appels réseau efficaces. Grâce à sa structure modulaire et à l’externalisation de l’analyse via une API dédiée, il garantit à la fois évolutivité, maintenabilité et réactivité. Ce script illustre ainsi la pertinence d’une solution technique légère au service de l’enrichissement de l’expérience utilisateur, notamment pour la vérification, l’assistance contextuelle ou la modération en ligne.
+
+
+
+\subsubsection*{Rôle de \texttt{background.js}}
+Le fichier \texttt{background.js} est un élément \textbf{essentiel} à l'extension. Il est responsable de la \textbf{persistance des données}, de la \textbf{gestion des événements liés au cycle de vie} de l'extension, et de l'\textbf{automatisation de la purge du cache}. Il représente le cœur logique de l'extension, assurant la synchronisation des requêtes entrantes et la continuité des opérations, même lorsque l'utilisateur n'interagit pas directement avec l'interface de l'extension.
+\subsubsection*{Rôle de \texttt{popup.js}}
+Le fichier \texttt{popup.js} constitue l'\textbf{interface utilisateur centrale et interactive} de l'extension. Il offre une \textbf{visualisation dynamique} des statistiques du cache, permet une \textbf{gestion directe} de celui-ci (comme le vidage), et peut déclencher des processus d'analyse via une interaction directe avec la page active. Son intégration fluide dans l'environnement de Chrome et sa capacité à réagir aux événements utilisateurs renforcent son \textbf{efficacité fonctionnelle et ergonomique}.
+
+\subsubsection*{Contribution et Perspectives}
+Cette extension, issue d'un développement collectif, illustre une \textbf{application systématique des meilleures pratiques} de développement web pour les navigateurs modernes, en exploitant pleinement les API de Chrome. Elle a été conçue pour être \textbf{légère, sécurisée, évolutive et centrée sur l'utilisateur}. Grâce à ses fonctionnalités asynchrones, sa gestion optimale des états et son interopérabilité avec l'environnement du navigateur, elle représente une \textbf{avancée technique} à la hauteur des standards établis en matière de développement d'extensions, offrant une base solide pour des évolutions futures en matière d'assistance informationnelle, de vérification des faits ou de modération de contenu.
+
+\subsubsection{Conclusion Générale sur l'Extension Chrome}
+
+L'extension Chrome développée dans ce projet se caractérise par une \textbf{architecture modulaire cohérente}, intégrant de manière efficace les scripts d'arrière-plan, les interfaces utilisateur et les scripts de contenu. Son objectif principal est l'\textbf{analyse}, la \textbf{gestion du cache} et l'\textbf{interaction contextuelle} avec des pages web spécifiques, notamment les plateformes de médias sociaux telles que Facebook ou Meta.
+\subsection{Réalisation Technique – Intégration de Ollama et du modèle LLaMA 3.2}
+
+Dans le cadre de ce projet, un des éléments essentiels de la réalisation technique concerne l'intégration d'un modèle de langage performant, capable d'évaluer la fiabilité d'un contenu textuel extrait de réseaux sociaux. Pour répondre à ce besoin, le choix s'est porté sur le modèle \textbf{LLaMA 3.2} (version 3B), accessible via un serveur \textbf{Ollama} déployé en local.
+
+---
+
+\subsubsection*{1. Justification du choix technologique}
+Le choix de LLaMA 3.2 repose sur plusieurs critères clés :
+\begin{itemize}
+    \item \textbf{Pertinence linguistique} : Ce modèle a été spécifiquement entraîné sur de vastes corpus textuels, lui conférant une capacité avérée à comprendre le langage courant, les structures argumentatives et les formulations typiques des publications en ligne.
+    \item \textbf{Taille équilibrée (3B)} : La version 3B de LLaMA offre un compromis optimal entre la qualité d'analyse et la consommation de ressources. Ceci est un facteur crucial pour une exécution efficace en local ou sur un serveur de petite taille.
+    \item \textbf{Open-source} : Contrairement à certains modèles propriétaires, LLaMA est accessible sous licence libre. Cette caractéristique facilite grandement son déploiement et son intégration dans des projets académiques, sans dépendre de services cloud commerciaux souvent onéreux ou restrictifs.
+    \item \textbf{Compatibilité avec Ollama} : Ollama se présente comme une solution légère et performante pour lancer des modèles LLM localement. Il fournit une API simple et intuitive, permettant un dialogue rapide et efficace entre notre backend et le modèle de langage.
+\end{itemize}
+
+\subsubsection*{2. Déploiement du serveur Ollama}
+Pour héberger et rendre accessible le modèle LLaMA, un serveur Ollama a été installé et configuré sur une machine locale dédiée. Ollama permet d'exécuter le modèle LLaMA comme un service accessible via des requêtes HTTP. Le processus d'installation a impliqué les étapes suivantes :
+\begin{itemize}
+    \item Installation du binaire Ollama.
+    \item Téléchargement du modèle LLaMA 3.2 (sous forme de fichier \texttt{.gguf}).
+    \item Démarrage du serveur local sur un port spécifique.
+    \item Configuration des routes d'accès nécessaires pour la communication avec le backend de l'extension.
+\end{itemize}
+Une fois déployé, le serveur Ollama est prêt à recevoir des \textbf{prompts} (requêtes textuelles structurées) envoyés par le backend via des requêtes \texttt{POST}. En retour, il fournit le texte généré par le modèle.
+
+
+\subsubsection*{3. Intégration avec le backend}
+Le backend de l'extension, développé en Python avec le framework Flask, assure une communication directe avec le serveur Ollama. Lorsqu'un post est extrait du réseau social, son contenu est d'abord analysé linguistiquement (NLP ), puis un \textbf{prompt structuré} est soigneusement construit à partir de cette analyse. Ce prompt est ensuite envoyé au serveur Ollama.
+
+Exemple simplifié de prompt construit :
+\begin{verbatim}
+Question: Le texte suivant est-il fiable ou non fiable ? 
+"Évalue la véracité de l'affirmation suivante :
+"Le citron peut guérir le cancer."
+Donne un verdict clair : Crédible, Douteux ou Faux.
+"
+Reponse:
+\end{verbatim}
+Ollama transmet ce prompt au modèle LLaMA, qui génère une réponse sous forme de texte brut. Le backend est ensuite chargé d'interpréter cette réponse et d'en extraire la classification finale (fiable/non fiable) qui sera affichée dans l'extension Chrome pour l'utilisateur.
+
+\subsubsection*{4. Résultats obtenus}
+L'intégration du modèle LLaMA 3.2 via Ollama a apporté plusieurs avantages significatifs :
+\begin{itemize}
+    \item \textbf{Réduction du temps de réponse} : Le temps de réponse moyen pour l'analyse d'un post a été réduit à moins de 3 secondes, garantissant une expérience utilisateur fluide.
+    \item \textbf{Confidentialité des données} : En évitant les appels à des services cloud externes, la confidentialité des données traitées est entièrement préservée, un aspect crucial pour ce type de projet.
+    \item \textbf{Stabilité du système} : Le système a démontré une meilleure stabilité lors des tests à grande échelle, grâce à l'exécution locale du modèle.
+\end{itemize}
+\subsubsection*{Conclusion}
+Le choix stratégique d'utiliser Ollama avec le modèle LLaMA 3.2 s'est avéré particulièrement judicieux pour un projet académique comme celui-ci, nécessitant à la fois \textbf{flexibilité}, \textbf{précision linguistique} et un \textbf{contrôle total} sur l'environnement technique. Ce duo technologique a permis d'intégrer un traitement intelligent et sophistiqué dans l'extension, tout en garantissant des performances satisfaisantes et une expérience utilisateur finale optimale.
+
+
+
+\section*{Conclusion}
+La mise en œuvre du système décrit dans ce projet a constitué une étape importante, traduisant les spécifications conceptuelles précédemment définies en une solution intégrée, fonctionnelle et prête à l'emploi. Ce chapitre a permis de mettre en évidence l'interaction harmonieuse des différents composants du système – l'extension Chrome, le serveur backend développé en Python/Flask, ainsi que le moteur d'analyse sémantique basé sur un modèle de langage étendu (LLaMA 3.2) via le serveur Ollama – pour fournir un service automatisé de vérification des faits sur les réseaux sociaux.
+
+Sur le plan technique, l'architecture distribuée mise en œuvre a favorisé la modularité, la maintenabilité et l'évolutivité du système. L'extension Chrome fonctionne comme un détecteur intelligent de contenu textuel dans l'environnement de navigation, tandis que le backend gère le traitement linguistique et la coordination avec le moteur d'intelligence artificielle. L'intégration d'un système de mise en cache local améliore les performances en minimisant les traitements redondants.
+
+De plus, l'utilisation de technologies modernes telles que Flask, JavaScript, API REST et JSON, combinée à un environnement de développement bien structuré, a permis une exécution sécurisée, efficace et conforme du système, conformément aux critères fonctionnels et non fonctionnels définis dans le chapitre précédent. Le système répond également aux exigences en matière d'ergonomie, de réactivité et de sécurité des transferts de données.
+
+Ainsi, la réalisation technique présentée dans ce chapitre valide à la fois la faisabilité et la robustesse du système présenté. Cela permet d'envisager des possibilités d'extension, par exemple à d'autres plateformes sociales, d'optimisation de l'algorithme d'intelligence artificielle, voire d'application globale de la solution à un usage généralisé.
+

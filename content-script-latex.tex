@@ -1,0 +1,646 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{courier}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+\geometry{margin=2cm}
+
+% Configuration des couleurs pour le code JavaScript
+\definecolor{jsbackground}{HTML}{1E1E1E}
+\definecolor{jstext}{HTML}{D4D4D4}
+\definecolor{jskeyword}{HTML}{569CD6}
+\definecolor{jsstring}{HTML}{CE9178}
+\definecolor{jscomment}{HTML}{6A9955}
+\definecolor{jsnumber}{HTML}{B5CEA8}
+\definecolor{jsfunction}{HTML}{DCDCAA}
+\definecolor{jsvariable}{HTML}{9CDCFE}
+
+% Configuration du style de code
+\lstdefinestyle{vscode-dark}{
+    backgroundcolor=\color{jsbackground},
+    commentstyle=\color{jscomment},
+    keywordstyle=\color{jskeyword}\bfseries,
+    numberstyle=\tiny\color{gray},
+    stringstyle=\color{jsstring},
+    basicstyle=\ttfamily\footnotesize\color{jstext},
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single,
+    frameround=tttt,
+    rulecolor=\color{gray},
+    xleftmargin=15pt,
+    xrightmargin=5pt,
+}
+
+% Mots-clés JavaScript
+\lstdefinelanguage{JavaScript}{
+    keywords={break, case, catch, continue, debugger, default, delete, do, else, false, finally, for, function, if, in, instanceof, new, null, return, switch, this, throw, true, try, typeof, var, void, while, with, const, let, async, await, class, extends, import, export},
+    morestring=[b]",
+    morestring=[b]',
+    morestring=[b]`,
+    morecomment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    sensitive=true
+}
+
+\lstset{
+    language=JavaScript,
+    style=vscode-dark
+}
+
+% Configuration des titres
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+
+\title{\textbf{Code JavaScript - Extension d'Analyse de Posts}}
+\author{Extension Chrome}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Variables Globales et Configuration}
+
+\begin{lstlisting}
+let postIndex = 0;
+const pendingPosts = new Set();
+const processedPosts = new Set();
+const observedPosts = new Set();
+
+const analysisCache = new Map();
+const CACHE_KEY = "post_analysis_cache";
+const CACHE_EXPIRY = 24 * 60 * 60 * 1000;
+\end{lstlisting}
+
+\section{Fonctions de Gestion du Cache}
+
+\subsection{Chargement du Cache}
+
+\begin{lstlisting}
+function loadCache() {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const parsedCache = JSON.parse(cached);
+      for (const [key, value] of Object.entries(parsedCache)) {
+        if (Date.now() - value.timestamp < CACHE_EXPIRY) {
+          analysisCache.set(key, value);
+        }
+      }
+      console.log(`Cache charge : ${analysisCache.size} entrees`);
+    }
+  } catch (error) {
+    console.error("Erreur lors du chargement du cache :", error);
+  }
+}
+\end{lstlisting}
+
+\subsection{Sauvegarde du Cache}
+
+\begin{lstlisting}
+function saveCache() {
+  try {
+    const cacheObject = Object.fromEntries(analysisCache);
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheObject));
+  } catch (error) {
+    console.error("Erreur lors de la sauvegarde du cache :", error);
+  }
+}
+\end{lstlisting}
+
+\subsection{Génération de Clé de Cache}
+
+\begin{lstlisting}
+function generateCacheKey(text) {
+  const normalizedText = text.trim().toLowerCase().replace(/\s+/g, " ");
+  return btoa(encodeURIComponent(normalizedText)).substring(0, 32);
+}
+\end{lstlisting}
+
+\section{Fonctions d'Extraction de Contenu}
+
+\subsection{Extraction de Texte HTML}
+
+\begin{lstlisting}
+function extractTextFromHTML(htmlString) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, "text/html");
+  return doc.body.textContent || "";
+}
+\end{lstlisting}
+
+\subsection{Extraction du Contenu Principal}
+
+\begin{lstlisting}
+function extractMainPostContent(postElement) {
+  try {
+    const clonedPost = postElement.cloneNode(true);
+
+    const commentSelectors = [
+      ".UFIContainer",
+      '[data-testid="ufi_comment_list"]',
+      ".comments",
+      ".UFIRow",
+      '.userContent + div[role="button"]',
+      ".UFICommentContainer",
+      '[aria-label*="comment"]',
+      ".comment",
+      '[data-testid*="comment"]',
+      ".UFILikeLink",
+      ".UFICommentLink",
+      ".UFIShareLink",
+    ];
+
+    commentSelectors.forEach((selector) => {
+      const elements = clonedPost.querySelectorAll(selector);
+      elements.forEach((el) => el.remove());
+    });
+
+    const mainContent = clonedPost.querySelector(
+      ".xdj266r.x14z9mp.xat24cr.x1lziwak.x1vvkbs.x126k92a"
+    );
+
+    if (mainContent) {
+      return extractTextFromHTML(mainContent.innerHTML);
+    } else {
+      const internalDivs = clonedPost.querySelectorAll("div[dir='auto']");
+      let combinedText = "";
+
+      internalDivs.forEach((div) => {
+        const text = div.textContent.trim();
+        if (text.length > 0) {
+          combinedText += text + " ";
+        }
+      });
+
+      if (combinedText.length > 0) {
+        return combinedText.trim();
+      }
+
+      return extractTextFromHTML(clonedPost.innerHTML);
+    }
+  } catch (error) {
+    console.warn("Erreur extraction contenu principal:", error);
+    return extractTextFromHTML(postElement.innerHTML);
+  }
+}
+\end{lstlisting}
+
+\section{Fonctions de Validation}
+
+\subsection{Vérification de Commentaire}
+
+\begin{lstlisting}
+function isComment(element) {
+  const commentIndicators = [
+    "UFIContainer",
+    "UFIRow",
+    "UFIComment",
+    "comment",
+    "commentContainer",
+  ];
+
+  const classList = element.className || "";
+  if (commentIndicators.some((indicator) => classList.includes(indicator))) {
+    return true;
+  }
+
+  const testId = element.getAttribute("data-testid") || "";
+  if (testId.includes("comment") || testId.includes("ufi")) {
+    return true;
+  }
+
+  const commentParent = element.closest(
+    '.UFIContainer, [data-testid="ufi_comment_list"], .comments'
+  );
+  if (commentParent) {
+    return true;
+  }
+
+  return false;
+}
+\end{lstlisting}
+
+\subsection{Vérification de Sous-élément}
+
+\begin{lstlisting}
+function isSubElement(element) {
+  const parentPost = element.closest(
+    ".xdj266r.x14z9mp.xat24cr.x1lziwak.x1vvkbs.x126k92a"
+  );
+  if (parentPost && parentPost !== element) {
+    return true;
+  }
+
+  return false;
+}
+\end{lstlisting}
+
+\section{Fonctions de Gestion des IDs}
+
+\subsection{Génération d'ID Simple}
+
+\begin{lstlisting}
+function generatePostId(index) {
+  return `post-${index}`;
+}
+\end{lstlisting}
+
+\subsection{Génération d'ID Unique}
+
+\begin{lstlisting}
+function generateUniquePostId(post) {
+  const textContent = extractMainPostContent(post);
+  const shortHash = btoa(
+    encodeURIComponent(textContent.substring(0, 100))
+  ).substring(0, 16);
+  return `post-${shortHash}-${postIndex++}`;
+}
+\end{lstlisting}
+
+\section{Fonctions de Gestion des Résultats}
+
+\subsection{Vérification de Résultat Injecté}
+
+\begin{lstlisting}
+function hasInjectedResult(post) {
+  return post.querySelector(".analysis-result") !== null;
+}
+\end{lstlisting}
+
+\subsection{Nettoyage des Résultats}
+
+\begin{lstlisting}
+function clearInjectedResult(post) {
+  const existingResult = post.querySelector(".analysis-result");
+  if (existingResult) {
+    existingResult.remove();
+  }
+}
+\end{lstlisting}
+
+\subsection{Injection de Résultat}
+
+\begin{lstlisting}
+function injectResult(post, postId, result) {
+  clearInjectedResult(post);
+
+  try {
+    const resultLower = result.toLowerCase();
+
+    let displayText = "";
+    let backgroundColor = "";
+    let borderColor = "";
+
+    if (
+      resultLower.indexOf("true") !== -1 &&
+      resultLower.indexOf("expressive") === -1
+    ) {
+      displayText = "True";
+      backgroundColor = "#008000";
+      borderColor = "#008000";
+    } else if (
+      resultLower.indexOf("expressive true") !== -1 ||
+      (resultLower.indexOf("expressive") !== -1 &&
+        resultLower.indexOf("true") !== -1)
+    ) {
+      displayText = "Expressive True";
+      backgroundColor = "#9ACD32";
+      borderColor = "#9ACD32";
+    } else if (
+      resultLower.indexOf("expressive false") !== -1 ||
+      (resultLower.indexOf("expressive") !== -1 &&
+        resultLower.indexOf("false") !== -1)
+    ) {
+      displayText = "Expressive False";
+      backgroundColor = "#f06900";
+      borderColor = "#f06900";
+    } else if (resultLower.indexOf("false") !== -1) {
+      displayText = "False";
+      backgroundColor = "#FF0000";
+      borderColor = "#FF0000";
+    } else {
+      displayText = result;
+      backgroundColor = "#666666";
+      borderColor = "#666666";
+    }
+
+    const resultBox = document.createElement("div");
+    resultBox.className = "analysis-result";
+    resultBox.style.cssText = `
+      margin-top: 10px;
+      padding: 8px;
+      background-color: ${backgroundColor};
+      border: 1px solid ${borderColor};
+      border-radius: 6px;
+      font-size: 14px;
+      color: white;
+      font-weight: bold;
+      z-index: 9999;
+      position: relative;
+    `;
+
+    resultBox.textContent = `Analyse : ${displayText}`;
+
+    const contentArea =
+      post.querySelector(
+        ".xdj266r.x14z9mp.xat24cr.x1lziwak.x1vvkbs.x126k92a"
+      ) || post;
+
+    contentArea.appendChild(resultBox);
+    post.dataset.analyzed = "true";
+    post.dataset.postId = postId;
+
+    console.log(`Resultat injecte pour ${postId}: ${displayText}`);
+  } catch (error) {
+    console.error(`Erreur d'injection pour ${postId}:`, error);
+  }
+}
+\end{lstlisting}
+
+\section{Fonction d'Analyse}
+
+\begin{lstlisting}
+async function analyzePostWithId(text, postId) {
+  const cacheKey = generateCacheKey(text);
+
+  if (analysisCache.has(cacheKey)) {
+    const cached = analysisCache.get(cacheKey);
+    console.log(`Resultat trouve dans le cache pour ${postId}`);
+    return cached.result;
+  }
+
+  try {
+    console.log(`Analyse en cours pour ${postId}...`);
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:5000/ask?html=${encodeURIComponent(
+          text
+        )}&id=${encodeURIComponent(postId)}`,
+        {
+          method: "GET",
+          mode: "cors",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Erreur de reponse du serveur");
+
+      const data = await response.json();
+
+      analysisCache.set(cacheKey, {
+        result: data.response,
+        timestamp: Date.now(),
+        postId: postId,
+      });
+
+      saveCache();
+
+      return data.response;
+    } catch (error) {
+      console.warn(
+        "Serveur local non disponible, utilisation du mode de secours"
+      );
+      return "Post analyse (mode local non disponible)";
+    }
+  } catch (error) {
+    console.error(`Erreur d'analyse pour ${postId} :`, error);
+    return "Erreur d'analyse.";
+  }
+}
+\end{lstlisting}
+
+\section{Fonctions de Sélection des Posts}
+
+\subsection{Sélecteurs de Posts}
+
+\begin{lstlisting}
+function getAllPostSelectors() {
+  return [
+    ".xdj266r.x14z9mp.xat24cr.x1lziwak.x1vvkbs.x126k92a",
+  ];
+}
+\end{lstlisting}
+
+\subsection{Récupération de Tous les Posts}
+
+\begin{lstlisting}
+function getAllPosts() {
+  const allPosts = new Set();
+  const selectors = getAllPostSelectors();
+
+  selectors.forEach((selector) => {
+    try {
+      const posts = document.querySelectorAll(selector);
+      posts.forEach((post) => {
+        if (isComment(post) || isSubElement(post)) {
+          return;
+        }
+
+        const textContent = extractMainPostContent(post);
+        if (textContent && textContent.length > 10) {
+          allPosts.add(post);
+        }
+      });
+    } catch (error) {
+      console.warn(`Erreur avec le selecteur ${selector}:`, error);
+    }
+  });
+
+  console.log(`${allPosts.size} posts principaux trouves`);
+  return Array.from(allPosts);
+}
+\end{lstlisting}
+
+\section{Fonctions de Traitement}
+
+\subsection{Observation des Changements}
+
+\begin{lstlisting}
+function observePostChanges() {
+  const posts = getAllPosts();
+  posts.forEach((post) => {
+    const postId = post.dataset.postId;
+  });
+}
+\end{lstlisting}
+
+\subsection{Traitement Principal des Posts}
+
+\begin{lstlisting}
+async function processPosts() {
+  const posts = getAllPosts();
+  console.log(`Traitement de ${posts.length} posts...`);
+
+  for (const post of posts) {
+    let postId = post.id || post.dataset.postId;
+    if (!postId) {
+      postId = generateUniquePostId(post);
+      post.id = postId;
+    }
+
+    if (pendingPosts.has(postId)) continue;
+
+    const htmlContent = post.innerHTML;
+    const cleanText = extractMainPostContent(post);
+
+    if (!cleanText || cleanText.length < 10) continue;
+
+    if (post.dataset.analyzed === "true" && hasInjectedResult(post)) {
+      processedPosts.add(postId);
+      continue;
+    }
+
+    const cacheKey = generateCacheKey(cleanText);
+    if (analysisCache.has(cacheKey)) {
+      const cached = analysisCache.get(cacheKey);
+      console.log(`Injection depuis le cache pour ${postId}`);
+      injectResult(post, postId, cached.result);
+      processedPosts.add(postId);
+      continue;
+    }
+
+    if (!processedPosts.has(postId)) {
+      pendingPosts.add(postId);
+
+      try {
+        const result = await analyzePostWithId(cleanText, postId);
+        injectResult(post, postId, result);
+        processedPosts.add(postId);
+      } catch (error) {
+        console.error(`Erreur lors du traitement de ${postId}:`, error);
+      } finally {
+        pendingPosts.delete(postId);
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+\section{Observateur de Scroll}
+
+\begin{lstlisting}
+function setupScrollObserver() {
+  const observer = new MutationObserver((mutations) => {
+    let hasNewContent = false;
+
+    mutations.forEach((mutation) => {
+      if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const selectors = getAllPostSelectors();
+            const isPost = selectors.some((selector) => {
+              try {
+                return node.matches(selector) || node.querySelector(selector);
+              } catch (e) {
+                return false;
+              }
+            });
+
+            if (isPost) {
+              hasNewContent = true;
+            }
+          }
+        });
+      }
+    });
+
+    if (hasNewContent) {
+      setTimeout(processPosts, 500);
+    }
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+
+  console.log("Observateur de scroll configure");
+}
+\end{lstlisting}
+
+\section{Fonctions d'Initialisation}
+
+\subsection{Traitement de Tous les Posts Visibles}
+
+\begin{lstlisting}
+async function processAllVisiblePosts() {
+  await processPosts();
+  console.log("Tous les posts visibles ont ete traites");
+}
+\end{lstlisting}
+
+\subsection{Initialisation Principale}
+
+\begin{lstlisting}
+function initialize() {
+  console.log("Initialisation de l'extension d'analyse de posts...");
+
+  loadCache();
+  setupScrollObserver();
+  setTimeout(processAllVisiblePosts, 1000);
+  setInterval(processAllVisiblePosts, 30000);
+
+  console.log("Extension initialisee avec succes");
+}
+\end{lstlisting}
+
+\section{Gestionnaire de Messages}
+
+\begin{lstlisting}
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log("Message recu:", message);
+
+  if (message.action === "getStatus") {
+    sendResponse({ active: true });
+  } else if (message.action === "clearCache") {
+    analysisCache.clear();
+    localStorage.removeItem(CACHE_KEY);
+    console.log("Cache vide");
+    sendResponse({ success: true });
+  } else if (message.action === "reprocessAll") {
+    processedPosts.clear();
+    const posts = getAllPosts();
+    posts.forEach((post) => {
+      post.dataset.analyzed = "false";
+      clearInjectedResult(post);
+    });
+    processAllVisiblePosts();
+    sendResponse({ success: true });
+  }
+
+  return true;
+});
+\end{lstlisting}
+
+\section{Démarrage de l'Application}
+
+\begin{lstlisting}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initialize);
+} else {
+  initialize();
+}
+\end{lstlisting}
+
+\end{document}

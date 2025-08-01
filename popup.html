@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        width: 300px;
+        padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        margin: 0;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .stats {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        backdrop-filter: blur(10px);
+      }
+
+      .stat-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      .stat-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      button {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+
+      button:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      .status {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 12px;
+        opacity: 0.8;
+      }
+
+      .emoji {
+        font-size: 16px;
+        margin-right: 8px;
+      }
+
+      .loading {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>🧠 Post Analyzer</h1>
+    </div>
+
+    <div class="stats" id="statsContainer">
+      <div class="stat-item">
+        <span>📊 Posts en cache:</span>
+        <span id="cacheCount">-</span>
+      </div>
+      <div class="stat-item">
+        <span>⏱️ Statut:</span>
+        <span id="status">Chargement...</span>
+      </div>
+      <div class="stat-item">
+        <span>🔄 Dernière MAJ:</span>
+        <span id="lastUpdate">-</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="refreshStats">
+        <span class="emoji">🔄</span>Actualiser les stats
+      </button>
+
+      <button id="clearCache">
+        <span class="emoji">🗑️</span>Vider le cache
+      </button>
+
+      <button id="reprocessAll">
+        <span class="emoji">⚡</span>Tout retraiter
+      </button>
+    </div>
+
+    <div class="status" id="statusMessage">
+      Extension active sur Facebook/Meta
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

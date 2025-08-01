@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "Post Analyzer with Cache",
+  "version": "1.0.0",
+  "description": "Analyse automatique des posts avec système de cache et surveillance continue",
+
+  "permissions": ["storage", "activeTab", "scripting", "tabs", "webRequest"],
+  "icons": {
+    "16": "logo16.png",
+    "32": "logo32.png",
+    "48": "logo48.png"
+  },
+
+  "host_permissions": [
+    "https://*.facebook.com/*",
+    "https://*.meta.com/*",
+    "http://127.0.0.1:5000/*",
+    "http://localhost:5000/*"
+  ],
+
+  "content_scripts": [
+    {
+      "matches": ["https://*.facebook.com/*", "https://*.meta.com/*"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Post Analyzer"
+  },
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["styles.css"],
+      "matches": ["https://*.facebook.com/*", "https://*.meta.com/*"]
+    }
+  ]
+}

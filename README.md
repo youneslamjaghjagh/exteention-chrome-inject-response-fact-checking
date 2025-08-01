@@ -1,2 +1,2 @@
-# exteention-chrome-inject-response-fact-checking
-extention chrome to anlayse text  factchecking
+# facktcheking-facebook-exetetion
+chrome extention for text content publiction analyse  in facebook and inject result
